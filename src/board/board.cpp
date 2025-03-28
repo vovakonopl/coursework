@@ -29,3 +29,11 @@ Cell &Board::cell_at(int x, int y) {
 
     return this->board[y][x];
 }
+
+int Board::get_rows() {
+    return rows;
+}
+
+int Board::get_cols() {
+    return cols;
+}
