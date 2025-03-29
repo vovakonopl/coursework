@@ -1,6 +1,8 @@
 #ifndef BORDERS_H
 #define BORDERS_H
 
+#define BORDER_CHAR_LEN 2 // UTF-8 char, 2 bytes
+
 // corners
 #define TL_CORNER "╔"
 #define TR_CORNER "╗"
