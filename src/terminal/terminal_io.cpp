@@ -14,8 +14,12 @@ using std::cin;
 using std::string;
 using std::string_view;
 
-static const int cell_width = 3;
-static const int cell_height = 1;
+// =-=-=-=-=-=-=-= Construcor =-=-=-=-=-=-=-= 
+Terminal::Terminal() {
+    cell_width = 3;
+    cell_height = 1;
+    p_board = nullptr;
+}
 
 // =-=-=-=-=-=-=-= Private methods =-=-=-=-=-=-=-= 
 void Terminal::disable_canon_mode() {
@@ -79,9 +83,6 @@ ArrowKey Terminal::read_arrow_key() {
 }
 
 void Terminal::cursor_to_cell(
-    Board &board,
-    int width,
-    int height,
     int row,
     int col
 ) {
@@ -91,53 +92,53 @@ void Terminal::cursor_to_cell(
     if (col < 0) {
         col = 0;
     }
-    row = std::min(row, board.get_rows());
-    col = std::min(col, board.get_cols());
+    row = std::min(row, p_board->get_rows());
+    col = std::min(col, p_board->get_cols());
 
     // +1 for the border line
-    int line = 1 * BORDER_CHAR_LEN + row * (height + 1);
-    int column = 1 * BORDER_CHAR_LEN + col * (width + 1);
+    int line = 1 * BORDER_CHAR_LEN + row * (cell_height + 1);
+    int column = 1 * BORDER_CHAR_LEN + col * (cell_width + 1);
     cout << cursor_to(line, column);
 }
 
 void Terminal::paint_cell(
-    Board &board,
     string_view bg_color,
-    int width,
-    int height,
     int row,
     int col
 ) {
     cout << CURSOR_SAVE;
-    cursor_to_cell(board, width, height, row, col);
-    Cell cell = board.cell_at(row, col);
-    string space(width, ' ');
+    cursor_to_cell(row, col);
+    Cell cell = p_board->cell_at(row, col);
+    string space(cell_width, ' ');
     string cell_value = space;
  
     // Display the number if cell is not empty 
     if (cell.get_value() != 0) {
         string value = std::to_string(cell.get_value()); 
-        int cell_center = (width - 1) / 2;
+        int cell_center = (cell_width - 1) / 2;
         cell_value.replace(cell_center, value.length(), value);
     }
 
-    for (int row = 0; row < height; row++) {
+    for (int row = 0; row < cell_height; row++) {
         cout << bg_color << BOLD;
-        if (row == (height - 1) / 2) {
+        if (row == (cell_height - 1) / 2) {
             cout << cell_value;
         } else {
             cout << space;
         }
 
-        cout << RESET_ALL << cursor_left(width) << cursor_down(1);
+        cout << RESET_ALL << cursor_left(cell_width) << cursor_down(1);
     }
 
     cout << CURSOR_RESTORE; 
 }
 
 // =-=-=-=-=-=-=-= Public methods =-=-=-=-=-=-=-= 
+void Terminal::set_board(Board *p_board) {
+    this->p_board = p_board;
+}
 
-Board Terminal::read_board() {
+Board *Terminal::read_board() {
     const string msg = "Enter the size of the board (n x n). n = "; 
     int board_size;
     
@@ -168,7 +169,10 @@ Board Terminal::read_board() {
     }
 
     clear_input();
-    return Board(board_size, board_size);
+    Board *p_board = new Board(board_size, board_size);
+    this->p_board = p_board;
+
+    return p_board;
 }
 
 // outputs a full border line (whole row)
@@ -194,9 +198,11 @@ void print_border_line(
     cout << last_char << std::endl;
 }
 
-void Terminal::render_board(Board &board) {
-    const int rows = board.get_rows();
-    const int cols = board.get_cols();
+void Terminal::render_board() {
+    if (!p_board) return;
+
+    const int rows = p_board->get_rows();
+    const int cols = p_board->get_cols();
     clear_terminal();
     cout << FONT_LIGHT_GRAY;
 
@@ -222,10 +228,10 @@ void Terminal::render_board(Board &board) {
         for (int col = 0; col < cols; col++) {
             int center_x = (cell_width - 1) / 2;
             int center_y = (cell_height - 1) / 2;
-            cursor_to_cell(board, cell_width, cell_height, row, col);
+            cursor_to_cell(row, col);
             cout << cursor_right(center_x) << cursor_down(center_y);
             
-            int num = board.cell_at(row, col).get_value();
+            int num = p_board->cell_at(row, col).get_value();
             if (num != 0) {
                 cout << num;
             }
@@ -235,7 +241,7 @@ void Terminal::render_board(Board &board) {
     cout << CURSOR_RESTORE;
 }
 
-void Terminal::fill_fixed_cells(Board &board) {
+void Terminal::fill_fixed_cells() {
     string finish_msg = FONT_ORANGE "[ Finish ]" RESET_ALL;
     cout << CURSOR_SAVE FONT_ORANGE << finish_msg << std::endl;
     cout << "Use the arrow keys to navigate between the cells and enter some fixed numbers (0 - 99).\n";
@@ -243,6 +249,7 @@ void Terminal::fill_fixed_cells(Board &board) {
 
     // current cursor position
     // cursor_to_cell();
+  
     int current_row = 0;
     int current_col = 0;
 
