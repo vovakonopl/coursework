@@ -5,11 +5,34 @@
 #include "terminal/codes/graphics.h"
 #include <iostream>
 #include <limits>
+#include <string>
+#include <termios.h>
+#include <unistd.h>
 
 using std::cout;
 using std::cin;
 using std::string;
 using std::string_view;
+
+static const int cell_width = 3;
+static const int cell_height = 1;
+
+// =-=-=-=-=-=-=-= Private methods =-=-=-=-=-=-=-= 
+void Terminal::disable_canon_mode() {
+    termios settings;
+    tcgetattr(STDIN_FILENO, &settings);
+    settings.c_lflag &= ~ICANON;
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &settings);
+}
+
+void Terminal::enable_canon_mode() {
+    termios settings;
+    tcgetattr(STDIN_FILENO, &settings);
+    settings.c_lflag |= ICANON;
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &settings);
+}
 
 void Terminal::clear_input() {
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -57,8 +80,8 @@ ArrowKey Terminal::read_arrow_key() {
 
 void Terminal::cursor_to_cell(
     Board &board,
-    int cell_width,
-    int cell_height,
+    int width,
+    int height,
     int row,
     int col
 ) {
@@ -72,10 +95,47 @@ void Terminal::cursor_to_cell(
     col = std::min(col, board.get_cols());
 
     // +1 for the border line
-    int line = 1 * BORDER_CHAR_LEN + row * (cell_height + 1);
-    int column = 1 * BORDER_CHAR_LEN + col * (cell_width + 1);
+    int line = 1 * BORDER_CHAR_LEN + row * (height + 1);
+    int column = 1 * BORDER_CHAR_LEN + col * (width + 1);
     cout << cursor_to(line, column);
 }
+
+void Terminal::paint_cell(
+    Board &board,
+    string_view bg_color,
+    int width,
+    int height,
+    int row,
+    int col
+) {
+    cout << CURSOR_SAVE;
+    cursor_to_cell(board, width, height, row, col);
+    Cell cell = board.cell_at(row, col);
+    string space(width, ' ');
+    string cell_value = space;
+ 
+    // Display the number if cell is not empty 
+    if (cell.get_value() != 0) {
+        string value = std::to_string(cell.get_value()); 
+        int cell_center = (width - 1) / 2;
+        cell_value.replace(cell_center, value.length(), value);
+    }
+
+    for (int row = 0; row < height; row++) {
+        cout << bg_color << BOLD;
+        if (row == (height - 1) / 2) {
+            cout << cell_value;
+        } else {
+            cout << space;
+        }
+
+        cout << RESET_ALL << cursor_left(width) << cursor_down(1);
+    }
+
+    cout << CURSOR_RESTORE; 
+}
+
+// =-=-=-=-=-=-=-= Public methods =-=-=-=-=-=-=-= 
 
 Board Terminal::read_board() {
     const string msg = "Enter the size of the board (n x n). n = "; 
@@ -135,8 +195,6 @@ void print_border_line(
 }
 
 void Terminal::render_board(Board &board) {
-    const int cell_width = 3;
-    const int cell_height = 1;
     const int rows = board.get_rows();
     const int cols = board.get_cols();
     clear_terminal();
@@ -176,3 +234,20 @@ void Terminal::render_board(Board &board) {
 
     cout << CURSOR_RESTORE;
 }
+
+void Terminal::fill_fixed_cells(Board &board) {
+    string finish_msg = FONT_ORANGE "[ Finish ]" RESET_ALL;
+    cout << CURSOR_SAVE FONT_ORANGE << finish_msg << std::endl;
+    cout << "Use the arrow keys to navigate between the cells and enter some fixed numbers (0 - 99).\n";
+    cout << CURSOR_INVISIBLE;
+
+    // current cursor position
+    // cursor_to_cell();
+    int current_row = 0;
+    int current_col = 0;
+
+    while (true) {
+        
+    }
+}
+

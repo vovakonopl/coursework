@@ -8,7 +8,9 @@
 #define CURSOR_RESTORE ESC "[u"
 #define REQUEST_CURSOR_POS ESC "[6n" // responds with "ESC[Y;XR" (y - line, x - col)
 #define CURSOR_HOME ESC "[H" // home position - 0, 0
- 
+#define CURSOR_INVISIBLE ESC "[?25l" 
+#define CURSOR_VISIBLE ESC "[?25h" 
+
 std::string cursor_to(int line, int col);
 std::string cursor_up(int lines);
 std::string cursor_down(int lines);
