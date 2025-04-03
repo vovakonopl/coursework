@@ -103,7 +103,30 @@ ArrowKey Terminal::read_arrow_key() {
     }
 }
 
-void Terminal::cursor_to_cell_start( int row, int col) {
+bool Terminal::ignore_esc_sequence() {
+    char ch = cin.get();
+    if (ch != ESC_CHAR) {
+        cin.putback(ch);
+        return false;
+    }
+
+    // Double check - most sequences have [ after ESC
+    ch = cin.get();
+    if (ch != '[') {
+        cin.putback(ch);
+        cin.putback(ESC_CHAR);
+        return false;
+    }
+
+    // All escape sequences ends with char between @ and ~ in ASCII table
+    do {
+        ch = cin.get();
+    } while (ch < '@' || ch > '~');
+    
+    return true;
+}
+
+void Terminal::cursor_to_cell_start(int row, int col) {
     if (row < 0) {
         row = 0;
     }
@@ -286,6 +309,7 @@ void Terminal::fill_fixed_cells() {
         int new_row = curr_row;
         int new_col = curr_col;
         bool is_moved = true;
+        bool is_esc_sequence = false;
 
         ArrowKey arrow = read_arrow_key();
         switch (arrow) {
@@ -307,7 +331,13 @@ void Terminal::fill_fixed_cells() {
 
             case ArrowKey::None:
                 is_moved = false;
+                is_esc_sequence = ignore_esc_sequence(); 
                 break;
+        }
+
+        // detected invalid sequence (E.g. Delete key = ESC[3~)
+        if (is_esc_sequence) {
+            continue;
         }
 
         if (is_btn_in_focus) {

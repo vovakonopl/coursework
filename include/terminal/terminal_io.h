@@ -21,10 +21,10 @@ class Terminal {
     void clear_terminal();
 
     // Next 2 methods read the input searching for specific key
-    // If they find unexpected char, they put all tacked chars back in the input stream
+    // If they find unexpected char, they put all taken chars back in the input stream
     ArrowKey read_arrow_key();
-    bool is_backspace();
-    
+    bool ignore_esc_sequence(); // returns true if sequence was found and cleared
+
     void cursor_to_cell_start(int row, int col);
     void draw_cell(std::string_view bg_color, int row, int col);
     void focus_cell(int row, int col);
