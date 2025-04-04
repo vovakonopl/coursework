@@ -13,12 +13,13 @@ class Terminal {
     // Cannonical mode allows to read the input after the Enter button is pressed
     void disable_canon_mode();
     void enable_canon_mode();
+  
     // Toggle showing typed characters
     void disable_echo();
     void enable_echo();
    
     void clear_input();
-    void clear_terminal();
+    void clear_terminal(); // clears everything on the screen
 
     // Next 2 methods read the input searching for specific key
     // If they find unexpected char, they put all taken chars back in the input stream
@@ -28,6 +29,10 @@ class Terminal {
     void cursor_to_cell_start(int row, int col);
     void draw_cell(std::string_view bg_color, int row, int col);
     void focus_cell(int row, int col);
+
+    // Resizes cells according to their number so that the board fits on the screen
+    // Returns true if cell size has been changed
+    bool resize_cells();
 
 public:
     Terminal();

@@ -4,11 +4,13 @@
 #include "terminal/codes/cursor.h"
 #include "terminal/codes/erase.h"
 #include "terminal/codes/graphics.h"
+#include "terminal/board_sizes.h"
 #include <iostream>
 #include <limits>
 #include <string>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 #include <cctype>
 
 #define MAX_CELL_VAL 99
@@ -184,9 +186,48 @@ void Terminal::focus_cell(int row, int col) {
     cursor_down(center_y);
 }
 
+// !* helper function *!
+bool fits_on_screen(BoardSize size, Board *p_board, const winsize &win_size) {
+    int cell_width; 
+    int cell_height;
+    set_sizes(size, cell_width, cell_height);
+    
+    // + 1 for boarders
+    int board_width = 1 + (cell_width + 1) * p_board->get_cols();  
+    int board_height = 1 + (cell_height + 1) * p_board->get_rows();  
+  
+    // cout << CURSOR_SAVE << cursor_to(40, 20) << "board: w = " << board_width << "; h = " << board_height;
+    // cout  << cursor_to(41, 20) << "window: cols = " << win_size.ws_col << "; rows = " << win_size.ws_row << CURSOR_RESTORE;
+
+    return 
+        board_width <= win_size.ws_col &&
+        board_height + 4 <= win_size.ws_row; // reserve rows under the board
+}
+
+bool Terminal::resize_cells() {
+    if (!p_board) return false;
+
+    int width_temp =  cell_width;   
+    int height_temp = cell_height;
+    
+    winsize win_size;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &win_size);
+    
+    if (fits_on_screen(BoardSize::Large, p_board, win_size)) {
+        set_sizes(BoardSize::Large, cell_width, cell_height);
+    } else if (fits_on_screen(BoardSize::Medium, p_board, win_size)) {
+        set_sizes(BoardSize::Medium, cell_width, cell_height);
+    } else {
+        set_sizes(BoardSize::Small, cell_width, cell_height);
+    }
+
+    return width_temp != cell_width || height_temp != cell_height;
+} 
+
 // =-=-=-=-=-=-=-= Public methods =-=-=-=-=-=-=-= 
 void Terminal::set_board(Board *p_board) {
     this->p_board = p_board;
+    resize_cells();
 }
 
 Board *Terminal::read_board() {
@@ -221,11 +262,12 @@ Board *Terminal::read_board() {
 
     clear_input();
     Board *p_board = new Board(board_size, board_size);
-    this->p_board = p_board;
+    set_board(p_board);
 
     return p_board;
 }
 
+// !* helper function *!
 // outputs a full border line (whole row)
 // takes characters in params to output them on specified places 
 void print_border_line(
@@ -284,17 +326,25 @@ void Terminal::render_board() {
     cout << CURSOR_RESTORE;
 }
 
+// !* helper function *!
+int calc_board_height(int rows, int cell_height) {
+    return 1 + rows * (cell_height + 1); // +1 for boarder lines
+}
+
 void Terminal::fill_fixed_cells() {
     render_board();
-    string finish_btn ="[ Finish ]";
+    string finish_btn = "[ Finish ]";
+    string hint = 
+        string("Use the arrow keys to navigate between the cells and enter some fixed numbers ") +
+        "(0 - " + std::to_string(MAX_CELL_VAL) + ").\n";
+
     cout << FONT_ORANGE << finish_btn << RESET_ALL << endl;
-    cout << "Use the arrow keys to navigate between the cells and enter some fixed numbers "
-        << "(0 - " << MAX_CELL_VAL << ").\n";
+    cout << hint;
     cout << CURSOR_INVISIBLE;
   
     const int rows = p_board->get_rows();
     const int cols = p_board->get_cols();
-    const int board_height = 1 + rows * (cell_height + 1); // +1 for boarder lines
+    int board_height = calc_board_height(rows, cell_height); 
 
     focus_cell(0, 0);
     int curr_row = 0;
@@ -310,6 +360,23 @@ void Terminal::fill_fixed_cells() {
         int new_col = curr_col;
         bool is_moved = true;
         bool is_esc_sequence = false;
+
+        // rerender board if it was resized
+        bool is_resized = resize_cells(); 
+        board_height = calc_board_height(rows, cell_height);
+        if (is_resized) {
+            render_board();
+            
+            cout << cursor_to(board_height + 1, 0);
+            if (is_btn_in_focus) {
+                cout << BG_ORANGE BOLD << finish_btn << RESET_ALL << endl;
+                cout << hint;
+            } else {
+                cout << FONT_ORANGE << finish_btn << RESET_ALL << endl;
+                cout << hint;
+                focus_cell(curr_row, curr_col);
+            }
+        }
 
         ArrowKey arrow = read_arrow_key();
         switch (arrow) {
@@ -390,8 +457,6 @@ void Terminal::fill_fixed_cells() {
         // handle key press (add value or ignore if it isn't digit)
         Cell &cell = p_board->cell_at(curr_row, curr_col);
         char ch = cin.get();
-
-        // ==============
 
         // if backspace or delete char
         if (ch == '\b' || ch == 127) {
