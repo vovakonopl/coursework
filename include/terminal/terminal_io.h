@@ -9,6 +9,8 @@ class Terminal {
     Board *p_board;
     int cell_width;
     int cell_height;
+    int board_width;
+    int board_height;
 
     // Cannonical mode allows to read the input after the Enter button is pressed
     void disable_canon_mode();

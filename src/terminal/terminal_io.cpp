@@ -221,6 +221,9 @@ bool Terminal::resize_cells() {
         set_sizes(BoardSize::Small, cell_width, cell_height);
     }
 
+    board_width = 1 + p_board->get_cols() * (cell_width + 1); // +1 for boarder lines
+    board_height = 1 + p_board->get_rows() * (cell_height + 1);
+
     return width_temp != cell_width || height_temp != cell_height;
 } 
 
@@ -327,24 +330,28 @@ void Terminal::render_board() {
 }
 
 // !* helper function *!
-int calc_board_height(int rows, int cell_height) {
-    return 1 + rows * (cell_height + 1); // +1 for boarder lines
+void display_finish_button(int board_width, bool is_active = false) {
+    string finish_btn = "[ Finish ]";
+    // left margin to center the button 
+    int btn_left_margin = (board_width - finish_btn.length()) / 2; 
+ 
+    cout << cursor_right(btn_left_margin); 
+    cout << (is_active ? BG_ORANGE BOLD : FONT_ORANGE);
+    cout << finish_btn << RESET_ALL << endl << endl;
 }
 
 void Terminal::fill_fixed_cells() {
     render_board();
-    string finish_btn = "[ Finish ]";
     string hint = 
         string("Use the arrow keys to navigate between the cells and enter some fixed numbers ") +
         "(0 - " + std::to_string(MAX_CELL_VAL) + ").\n";
 
-    cout << FONT_ORANGE << finish_btn << RESET_ALL << endl;
+    display_finish_button(board_width);
     cout << hint;
     cout << CURSOR_INVISIBLE;
   
     const int rows = p_board->get_rows();
     const int cols = p_board->get_cols();
-    int board_height = calc_board_height(rows, cell_height); 
 
     focus_cell(0, 0);
     int curr_row = 0;
@@ -363,17 +370,15 @@ void Terminal::fill_fixed_cells() {
 
         // rerender board if it was resized
         bool is_resized = resize_cells(); 
-        board_height = calc_board_height(rows, cell_height);
         if (is_resized) {
             render_board();
-            
+         
             cout << cursor_to(board_height + 1, 0);
-            if (is_btn_in_focus) {
-                cout << BG_ORANGE BOLD << finish_btn << RESET_ALL << endl;
-                cout << hint;
-            } else {
-                cout << FONT_ORANGE << finish_btn << RESET_ALL << endl;
-                cout << hint;
+            display_finish_button(board_width, is_btn_in_focus);
+            cout << hint;
+         
+            // refocus current cell
+            if (!is_btn_in_focus) {
                 focus_cell(curr_row, curr_col);
             }
         }
@@ -412,7 +417,7 @@ void Terminal::fill_fixed_cells() {
             if (arrow == ArrowKey::Up) {
                 // blur button
                 cout << cursor_to(board_height + 1, 0);
-                cout << FONT_ORANGE << finish_btn << RESET_ALL << endl;
+                display_finish_button(board_width);
                 
                 focus_cell(curr_row, curr_col);
                 is_btn_in_focus = false;
@@ -442,7 +447,7 @@ void Terminal::fill_fixed_cells() {
             if (new_row == rows) {
                 is_btn_in_focus = true;
                 cout << cursor_to(board_height + 1, 0);
-                cout << BG_ORANGE BOLD << finish_btn << RESET_ALL << endl;
+                display_finish_button(board_width, true);
                 
                 continue;
             }
