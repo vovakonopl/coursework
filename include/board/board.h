@@ -4,8 +4,8 @@
 #include "cell.h"
 
 class Board {
-    static int rows;
-    static int cols;
+    int rows;
+    int cols;
     Cell **board;
 
 public:
@@ -13,6 +13,8 @@ public:
     ~Board();
 
     Cell &cell_at(int x, int y);
+    int get_rows();
+    int get_cols();
 };
 
 #endif
