@@ -22,18 +22,49 @@ Board::~Board() {
     delete[] this->board;
 }
 
-Cell &Board::cell_at(int x, int y) {
-    if (x < 0 || x >= this->cols || y < 0 || y >= this->rows) {
-        throw std::out_of_range("Index out of range!");
-    }
-
-    return this->board[y][x];
-}
-
 int Board::get_rows() {
     return rows;
 }
 
 int Board::get_cols() {
     return cols;
+}
+
+void Board::create_cell(int row, int col, int value, bool is_fixed) {
+    if (row < 0 || row >= this->cols || col < 0 || col >= this->rows) {
+        throw std::out_of_range("Index out of range!");
+    }
+    
+    Cell &cell = this->cell_at(row, col);
+    cell = Cell(row, col, value, is_fixed);
+}
+
+Cell &Board::cell_at(int row, int col) {
+    if (row < 0 || row >= this->cols || col < 0 || col >= this->rows) {
+        throw std::out_of_range("Index out of range!");
+    }
+
+    return this->board[row][col];
+}
+
+Cell &Board::cell_at(Coord coord) {
+    return this->cell_at(coord.row, coord.col);
+}
+
+int Board::create_region(int target_size) {
+    int idx = regions.size();
+    regions.push_back(Region(idx, target_size));
+    return idx;
+}
+
+void Board::pop_region() {
+    regions.pop_back();    
+}
+
+Region &Board::region_at(long unsigned int idx) {
+    if (idx >= regions.size()) {
+        throw std::out_of_range("Index out of range!");
+    }
+
+    return regions.at(idx);
 }

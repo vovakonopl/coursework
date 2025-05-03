@@ -6,6 +6,7 @@ Cell::Cell() {
     this->region_id = -1;
 } 
 
+// TODO: remove these constructors
 Cell::Cell(int value) {
     this->value = value;
     this->is_fixed = false;
@@ -16,7 +17,16 @@ Cell::Cell(int value, bool is_fixed) {
     this->value = value;
     this->is_fixed = is_fixed;
     this->region_id = -1;
-} 
+}
+// -------------------------------
+
+Cell::Cell(int row, int col, int value, bool is_fixed) {
+    this->coord.row = row;
+    this->coord.col = col;
+    this->value = value;
+    this->is_fixed = is_fixed;
+    this->region_id = -1;
+}
 
 int Cell::get_value() {
     return this->value;
