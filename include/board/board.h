@@ -14,6 +14,7 @@ class Board {
 
 public:
     std::vector<Coord> fixed_cell_coords;
+    int filled_cells_count; // how much filled corectly
 
     Board(int rows, int cols);
     ~Board();
@@ -25,9 +26,11 @@ public:
     Cell &cell_at(Coord coord);
     void create_cell(int row, int col, int value, bool is_fixed = false);
 
-    int create_region(int target_size);
-    void pop_region(); // remove last
+    int create_region(int target_size); // returns idx in vector 
+    void pop_region(); // removes last
     Region &region_at(long unsigned int idx);
+
+    void create_fixed_cells_list();
 };
 
 #endif

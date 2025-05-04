@@ -8,6 +8,7 @@ Board::Board(int rows, int cols) {
 
     this->rows = rows;
     this->cols = cols;
+    this->filled_cells_count = 0;
     this->board = new Cell*[rows];
     for (int i = 0; i < rows; i++) {
         this->board[i] = new Cell[cols];
@@ -67,4 +68,16 @@ Region &Board::region_at(long unsigned int idx) {
     }
 
     return regions.at(idx);
+}
+
+void Board::create_fixed_cells_list() {
+    fixed_cell_coords.clear();
+
+    for (int row = 0; row < rows; row++) {
+        for (int col = 0; col < cols; col++) {
+            if (board[row][col].get_is_fixed()) {
+                fixed_cell_coords.push_back(Coord(row, col));
+            }
+        }
+    }
 }

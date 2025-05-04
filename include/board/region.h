@@ -17,6 +17,7 @@ public:
     int get_size();
     bool push(const Coord &coord); // return true if added coords
     Coord pop(); // return Coord {-1, -1} if empty
+    Coord coord_at(long unsigned int idx);
 };
 
 #endif

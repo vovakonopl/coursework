@@ -40,3 +40,7 @@ void Cell::set_value(int value) {
 bool Cell::get_is_fixed() {
     return this->is_fixed;
 }
+
+Coord Cell::get_coord() {
+    return coord;
+}

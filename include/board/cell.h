@@ -23,6 +23,7 @@ public:
     int get_value();
     void set_value(int value);
     bool get_is_fixed();
+    Coord get_coord();
 };
 
 #endif
