@@ -1,2 +1,6 @@
 # compiled program
 app.exe
+
+# log files
+log.txt
+log_board.txt

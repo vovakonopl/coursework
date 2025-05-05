@@ -2,6 +2,7 @@
 #define CELL_H
 
 #include "board/coordinate.h"
+#include <ostream>
 
 class Cell {
     int value;
@@ -24,6 +25,9 @@ public:
     void set_value(int value);
     bool get_is_fixed();
     Coord get_coord();
+
+    // for debugging
+    friend std::ostream &operator <<(std::ostream &stream, Cell &cell);
 };
 
 #endif

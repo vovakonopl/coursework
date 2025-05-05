@@ -29,6 +29,7 @@ public:
     int create_region(int target_size); // returns idx in vector 
     void pop_region(); // removes last
     Region &region_at(long unsigned int idx);
+    int get_regions_count();
 
     void create_fixed_cells_list();
 };
