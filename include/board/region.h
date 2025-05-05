@@ -15,9 +15,11 @@ public:
     int get_id();
     int get_target_size();
     int get_size();
+    
     bool push(const Coord &coord); // return true if added coords
     Coord pop(); // return Coord {-1, -1} if empty
     Coord coord_at(long unsigned int idx);
+    void remove_at(int idx);
 };
 
 #endif

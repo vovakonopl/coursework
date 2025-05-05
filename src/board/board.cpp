@@ -10,6 +10,7 @@ Board::Board(int rows, int cols) {
     this->rows = rows;
     this->cols = cols;
     this->filled_cells_count = 0;
+    this->region_count = 0;
     this->board = new Cell*[rows];
     for (int i = 0; i < rows; i++) {
         this->board[i] = new Cell[cols];
@@ -61,16 +62,17 @@ Cell &Board::cell_at(Coord coord) {
     return this->cell_at(coord.row, coord.col);
 }
 
-int Board::create_region(int target_size) {
-    int idx = static_cast<int>(regions.size());
-    regions.push_back(Region(idx, target_size));
-    return idx;
+Region Board::create_region(int target_size) {
+    Region region(region_count, target_size);
+    region_count++;
+
+    return region;
 }
+/*
 
 void Board::pop_region() {
     if (regions.empty()) return;
 
-    /*
     // undo all cells inside
     Region &region = regions.back();
     for (int i = 0; i < region.get_size(); i++) {
@@ -84,7 +86,6 @@ void Board::pop_region() {
             }
         }
     }
-    */
 
     regions.pop_back();    
 }
@@ -100,6 +101,7 @@ Region &Board::region_at(long unsigned int idx) {
 int Board::get_regions_count() {
     return static_cast<int>(regions.size());
 }
+*/
 
 void Board::create_fixed_cells_list() {
     fixed_cell_coords.clear();

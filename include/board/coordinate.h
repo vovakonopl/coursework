@@ -10,6 +10,8 @@ public:
 
     Coord();
     Coord(int row, int col);
+
+    bool operator ==(Coord coord);
  
     friend std::ostream &operator <<(std::ostream &stream, Coord coord);
 };

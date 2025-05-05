@@ -9,8 +9,9 @@
 class Board {
     int rows;
     int cols;
+    int region_count;
     Cell **board;
-    std::vector<Region> regions;
+    // std::vector<Region> regions;
 
 public:
     std::vector<Coord> fixed_cell_coords;
@@ -25,11 +26,13 @@ public:
     Cell &cell_at(int row, int col);
     Cell &cell_at(Coord coord);
     void create_cell(int row, int col, int value, bool is_fixed = false);
-
-    int create_region(int target_size); // returns idx in vector 
+    
+    Region create_region(int target_size); 
+    /*
     void pop_region(); // removes last
     Region &region_at(long unsigned int idx);
     int get_regions_count();
+    */
 
     void create_fixed_cells_list();
 };

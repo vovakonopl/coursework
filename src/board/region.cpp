@@ -1,5 +1,4 @@
 #include "board/region.h"
-#include <iostream>
 #include <stdexcept>
 
 Region::Region(int id, int target_size) {
@@ -20,10 +19,6 @@ int Region::get_size() {
 }
 
 bool Region::push(const Coord &coord) {
-    if (target_size != -1 && coords.size() >= static_cast<long unsigned int>(target_size)) {
-        return false;
-    }
-
     coords.push_back(coord);
     return true;
 }
@@ -41,10 +36,28 @@ Coord Region::pop() {
 
 Coord Region::coord_at(long unsigned int idx) {
     if (idx < 0 || idx >= coords.size()) {
-        std::cout << "Idx error: " << idx << "\n";
         throw std::out_of_range("Index out of range!");
     }
 
-        std::cout << "Idx: " << idx << "\n";
     return coords.at(idx);
+}
+
+void Region::remove_at(int idx) {
+    // remove last
+    int size = static_cast<int>(coords.size());
+    if (idx < 0 || idx >= size) {
+        throw std::out_of_range("Index out of range!");
+    }
+
+    if (idx == size - 1) {
+        coords.pop_back();
+        return;
+    }
+
+    // if not last => shift items left and remove last
+    for (int i = idx; i < size - 1; i++) {
+        coords.at(i) = coords.at(i + 1);
+    }
+
+    coords.pop_back();
 }

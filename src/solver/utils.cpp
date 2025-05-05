@@ -88,7 +88,7 @@ bool can_be_merged(Board &board, Cell &main_cell, Cell &adj_cell) {
         if (!is_coord_valid(board, adj_coords[i])) continue;
         if (adj_coords[i].row == main_row && adj_coords[i].col == main_col) continue;
 
-        Cell &inspected_cell = board.cell_at(adj_coords[i]); // adjacent to our old adj_cell
+        Cell &inspected_cell = board.cell_at(adj_coords[i]); // adjacent to adj_cell
         if (inspected_cell.region_id == -1) continue; // if empty
         if (cell.region_id == adj_cell.region_id) continue; // same regions
         if (cell.get_value() != adj_cell.get_value()) continue; // different values 
@@ -154,35 +154,29 @@ bool is_valid_single_cell(Board &board, Coord coord) {
 }
 
 // helper function. Resets changes made in fill_remaining_cells() 
-void reset_last_region(Board &board, Region &region) {
-    for (int i = 0; i < region.get_size(); i++) {
-        Coord coord = region.coord_at(i);
+void reset_region(Board &board, Region *p_region) {
+    for (int i = 0; i < p_region->get_size(); i++) {
+        Coord coord = p_region->coord_at(i);
         Cell &cell = board.cell_at(coord);
         
         cell.set_value(0);
         cell.region_id = -1;
         board.filled_cells_count--;
     }
-
-    cout << "reset region was called!\n";
-    board.pop_region();
 }
 
 bool fill_remaining_cells(Board &board) {
-    cout << "it is fill_remaining_cells\n";
+    return true;
     if (board.filled_cells_count == board.get_cols() * board.get_rows()) {
         return true;
     }
 
     Coord first_unfilled_coord = find_first_unfilled(board);
-    if (first_unfilled_coord.row == -1) return true; // must be impossible because of first check, but just extra care
+    if (first_unfilled_coord.row == -1) return true;
 
+    Region region = board.create_region(-1);;
     CoordQueue queue;
     queue.enqueue(first_unfilled_coord);
-
-    int reg_idx = board.create_region(-1);
-    Region &region = board.region_at(reg_idx);
-
     while (queue.get_size() > 0) {
         Coord cell_coord = queue.dequeue();
         Cell &cell = board.cell_at(cell_coord);
@@ -213,14 +207,14 @@ bool fill_remaining_cells(Board &board) {
     // if it is a single cell, then validate it
     if (region.get_size() == 1 && !is_valid_single_cell(board, region.coord_at(0))) {
         // Undo all changes and come back to solve()
-        reset_last_region(board, region);
+        reset_region(board, &region);
         return false;
     }
 
     if (fill_remaining_cells(board)) return true;
 
     // if failed to fill remaining cells, then undo changes
-    reset_last_region(board, region);
+    reset_region(board, &region);
     return false;
 }
 
@@ -237,23 +231,21 @@ bool is_valid_adjacency(Board &board, Cell &cell) {
     for (int i = 0; i < 4; i++) {
         if (!is_coord_valid(board, adj_coords[i])) continue;
         Cell &adj_cell = board.cell_at(adj_coords[i]);
-        if (
-            adj_cell.region_id == -1 &&
-            (!adj_cell.get_is_fixed() || adj_cell.get_value() != cell.get_value())
-        ) continue; // if empty and not fixed cell of same value
-        if (cell.region_id == adj_cell.region_id && cell.get_value() == adj_cell.get_value()) continue; // same regions and values
-
-        return false;
+        if (adj_cell.get_value() == cell.get_value() && adj_cell.region_id != cell.region_id) {
+            return false;
+        }
     }
 
     return true;
 }
 
-bool is_region_valid(Board &board, Region &region) {
-    if (region.get_size() != region.get_target_size()) return false;
+bool is_region_valid(Board &board, Region *p_region) {
+    if (p_region->get_size() != p_region->get_target_size()) {
+        return false;
+    } 
 
-    for (int i = 0; i < region.get_size(); i++) {
-        Coord coord = region.coord_at(i);
+    for (int i = 0; i < p_region->get_size(); i++) {
+        Coord coord = p_region->coord_at(i);
         Cell &cell = board.cell_at(coord);
 
         if (!is_valid_adjacency(board, cell)) return false;
@@ -262,11 +254,18 @@ bool is_region_valid(Board &board, Region &region) {
     return true;
 }
 
-void undo_cell(Board &board, Region &region, Cell &cell) {
-    board.filled_cells_count--;
-    cell.region_id = -1;
-    region.pop();
-    if (!cell.get_is_fixed()) {
-        cell.set_value(0);
+// safe undo
+void undo_cell(Board &board, Region *p_region, Cell &cell) {
+    for (int i = p_region->get_size() - 1; i >= 0; i--) { 
+        if (cell.get_coord() == p_region->coord_at(i)) {
+            board.filled_cells_count--;
+            cell.region_id = -1;
+            p_region->remove_at(i);
+            if (!cell.get_is_fixed()) {
+                cell.set_value(0);
+            }
+
+            return;
+        }
     }
 }

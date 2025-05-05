@@ -27,8 +27,8 @@ bool fill_remaining_cells(Board &board);
 
 // Validates for adjacency with other regions or fixed cells after finishing region.
 // There must be no adjacent unfilled fixed cells or same adjacent regions.
-bool is_region_valid(Board &board, Region &region);
+bool is_region_valid(Board &board, Region *p_region);
 
-void undo_cell(Board &board, Region &region, Cell &cell);
+void undo_cell(Board &board, Region *p_region, Cell &cell);
 
 #endif
