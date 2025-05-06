@@ -37,7 +37,7 @@ Coord get_free_adj_cell(Board &board, Cell &cell, Direction dir) {
     }
 
     Coord coord = Coord(row, col);
-    Cell adj_cell = board.cell_at(coord);
+    Cell &adj_cell = board.cell_at(coord);
     // if cell already owned
     if (adj_cell.region_id != -1) {
         return Coord(-1, -1);
@@ -63,48 +63,6 @@ bool has_any_free_adj_cell(Board &board, Cell &cell) {
 
     return false;
 }
-
-/*
-bool can_be_merged(Board &board, Cell &main_cell, Cell &adj_cell) {
-    if (
-        adj_cell.region_id != -1 || // it isn't free cell
-        (adj_cell.get_is_fixed() && adj_cell.get_value() != main_cell.get_value()) // it is fixed and has different value 
-    ) {
-        return false;
-    }
-
-    int adj_row = adj_cell.get_coord().row;
-    int adj_col = adj_cell.get_coord().col;
-    int main_row = main_cell.get_coord().row;
-    int main_col = main_cell.get_coord().col;
-    
-    Coord adj_coords[4];
-    adj_coords[0] = Coord(adj_row - 1, adj_col); // top
-    adj_coords[1] = Coord(adj_row + 1, adj_col); // bottom
-    adj_coords[2] = Coord(adj_row, adj_col - 1); // left
-    adj_coords[3] = Coord(adj_row, adj_col + 1); // right
-
-    for (int i = 0; i < 4; i++) {
-        if (!is_coord_valid(board, adj_coords[i])) continue;
-        if (adj_coords[i].row == main_row && adj_coords[i].col == main_col) continue;
-
-        Cell &inspected_cell = board.cell_at(adj_coords[i]); // adjacent to adj_cell
-        if (inspected_cell.region_id == -1) continue; // if empty
-        if (cell.region_id == adj_cell.region_id) continue; // same regions
-        if (cell.get_value() != adj_cell.get_value()) continue; // different values 
-        
-        if (
-            adj_cell.region_id != -1 && // not empty
-            main_cell.region_id != adj_cell.region_id && // not from same region
-            main_cell.get_value() == adj_cell.get_value() // same region sizes
-        ) {
-            return false;
-        }
-    }
-
-    return true;
-}
-*/
 
 int get_next_unfilled_fixed_cell_idx(Board &board) {
     for (long unsigned int i = 0; i < board.fixed_cell_coords.size(); i++) {
@@ -161,15 +119,12 @@ void reset_region(Board &board, Region *p_region) {
         
         cell.set_value(0);
         cell.region_id = -1;
-        board.filled_cells_count--;
     }
 }
 
 bool fill_remaining_cells(Board &board) {
-    return true;
-    if (board.filled_cells_count == board.get_cols() * board.get_rows()) {
-        return true;
-    }
+    cout << "fill_remaining_cells!!!\n";
+    return true; // Testing for now
 
     Coord first_unfilled_coord = find_first_unfilled(board);
     if (first_unfilled_coord.row == -1) return true;
@@ -183,9 +138,7 @@ bool fill_remaining_cells(Board &board) {
       
         // mark cell
         cell.region_id = region.get_id();
-        cout << "fill remaining " << cell_coord;
         region.push(cell_coord);
-        board.filled_cells_count++;
 
         // for each direction
         for (int i = 0; i < 4; i++) {
@@ -230,6 +183,7 @@ bool is_valid_adjacency(Board &board, Cell &cell) {
 
     for (int i = 0; i < 4; i++) {
         if (!is_coord_valid(board, adj_coords[i])) continue;
+ 
         Cell &adj_cell = board.cell_at(adj_coords[i]);
         if (adj_cell.get_value() == cell.get_value() && adj_cell.region_id != cell.region_id) {
             return false;
@@ -256,9 +210,8 @@ bool is_region_valid(Board &board, Region *p_region) {
 
 // safe undo
 void undo_cell(Board &board, Region *p_region, Cell &cell) {
-    for (int i = p_region->get_size() - 1; i >= 0; i--) { 
+    for (int i = 0; i < p_region->get_size(); i++) { 
         if (cell.get_coord() == p_region->coord_at(i)) {
-            board.filled_cells_count--;
             cell.region_id = -1;
             p_region->remove_at(i);
             if (!cell.get_is_fixed()) {
@@ -268,4 +221,50 @@ void undo_cell(Board &board, Region *p_region, Cell &cell) {
             return;
         }
     }
+}
+
+void get_adjs_with_same_val(Board &board, Cell &cell, vector<Coord> &vec) {
+    int row = cell.get_coord().row;
+    int col = cell.get_coord().col;
+    Coord adj_coords[4];
+    adj_coords[0] = Coord(row - 1, col); // top
+    adj_coords[1] = Coord(row + 1, col); // bottom
+    adj_coords[2] = Coord(row, col - 1); // left
+    adj_coords[3] = Coord(row, col + 1); // right
+
+    for (int i = 0; i < 4; i++) {
+        if (!is_coord_valid(board, adj_coords[i])) continue;
+        
+        Cell &adj_cell = board.cell_at(adj_coords[i]);
+        if (adj_cell.region_id == cell.region_id) continue;
+
+        if (adj_cell.get_value() == cell.get_value()) {
+            vec.push_back(adj_coords[i]);   
+        }
+    }
+}
+
+bool can_be_added_to_region(Board &board, Coord coord, Region *p_region) {
+    int row = coord.row;
+    int col = coord.col;
+    Coord adj_coords[4];
+    adj_coords[0] = Coord(row - 1, col); // top
+    adj_coords[1] = Coord(row + 1, col); // bottom
+    adj_coords[2] = Coord(row, col - 1); // left
+    adj_coords[3] = Coord(row, col + 1); // right
+
+    for (int i = 0; i < 4; i++) {
+        if (!is_coord_valid(board, adj_coords[i])) continue;
+
+        Cell &adj_cell = board.cell_at(adj_coords[i]);
+        if (adj_cell.region_id == -1) continue; 
+        if(
+            adj_cell.get_value() == p_region->get_target_size() &&
+            adj_cell.region_id != p_region->get_id()
+        ) {
+            return false;
+        }
+    }
+
+    return true;
 }

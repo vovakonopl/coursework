@@ -3,6 +3,7 @@
 
 #include "board/coordinate.h"
 #include "board/board.h"
+#include <vector>
 
 enum class Direction {
     Up,
@@ -30,5 +31,8 @@ bool fill_remaining_cells(Board &board);
 bool is_region_valid(Board &board, Region *p_region);
 
 void undo_cell(Board &board, Region *p_region, Cell &cell);
+
+void get_adjs_with_same_val(Board &board, Cell &cell, std::vector<Coord> &vec);
+bool can_be_added_to_region(Board &board, Coord coord, Region *p_region);
 
 #endif

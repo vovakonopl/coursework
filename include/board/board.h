@@ -11,11 +11,9 @@ class Board {
     int cols;
     int region_count;
     Cell **board;
-    // std::vector<Region> regions;
 
 public:
     std::vector<Coord> fixed_cell_coords;
-    int filled_cells_count; // how much filled corectly
 
     Board(int rows, int cols);
     ~Board();
@@ -28,11 +26,6 @@ public:
     void create_cell(int row, int col, int value, bool is_fixed = false);
     
     Region create_region(int target_size); 
-    /*
-    void pop_region(); // removes last
-    Region &region_at(long unsigned int idx);
-    int get_regions_count();
-    */
 
     void create_fixed_cells_list();
 };

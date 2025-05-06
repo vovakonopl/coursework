@@ -42,12 +42,12 @@ bool Cell::get_is_fixed() {
 }
 
 Coord Cell::get_coord() {
-    return coord;
+    return this->coord;
 }
 
 std::ostream &operator <<(std::ostream &stream, Cell &cell) {
-    stream << "Cell: { " << cell.get_coord().row <<  ", " << cell.get_coord().col
-        << " }; val = " << cell.get_value() << "; fixed = " << cell.get_is_fixed()
+    stream << "Cell: " << cell.get_coord() << "; val = " << cell.get_value()
+        << "; fixed = " << cell.get_is_fixed()
         << "; reg id = " << cell.region_id << std::endl;
     return stream;
 }

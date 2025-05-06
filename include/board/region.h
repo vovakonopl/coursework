@@ -5,7 +5,7 @@
 #include <vector>
 
 class Region {
-    int id; // idx in the list of regions
+    int id; 
     int target_size; // -1 if it hasn't target size and always can grow 
     std::vector<Coord> coords;
 
@@ -16,9 +16,9 @@ public:
     int get_target_size();
     int get_size();
     
-    bool push(const Coord &coord); // return true if added coords
-    Coord pop(); // return Coord {-1, -1} if empty
-    Coord coord_at(long unsigned int idx);
+    void push(const Coord &coord);
+    Coord pop(); // returns Coord {-1, -1} if empty
+    Coord coord_at(int idx);
     void remove_at(int idx);
 };
 
