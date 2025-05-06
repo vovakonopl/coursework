@@ -20,8 +20,6 @@ bool solve(Board &board) {
     return solve(board, &region, fixed_cell);
 }
 
-int count = 1;
-
 bool solve(Board &board, Region *p_region, Cell &cell) {
     // check whether cell contains adjacent cells of save value
     std::vector<Coord> adjs_with_same_val;
@@ -101,7 +99,33 @@ bool solve(Board &board, Region *p_region, Cell &cell) {
         if (coord == cell.get_coord()) continue;
 
         Cell &cell_in_reg = board.cell_at(coord);
-        if (solve(board, p_region, cell_in_reg)) return true;
+        if (!has_any_free_adj_cell(board, cell_in_reg)) continue;
+ 
+        // for each direction
+        for (int i = 0; i < 4; i++) {
+            Direction dir = static_cast<Direction>(i);
+            Coord next_cell_coord = get_free_adj_cell(board, cell_in_reg, dir);
+            if (next_cell_coord.row == -1) continue;
+
+            // check whether this cell can be added to region
+            bool is_valid_adjacency = can_be_added_to_region(board, next_cell_coord, p_region);
+            if (!is_valid_adjacency) continue;
+
+            Cell &next_cell = board.cell_at(next_cell_coord);
+            next_cell.region_id = p_region->get_id();
+            next_cell.set_value(p_region->get_target_size());
+            p_region->push(next_cell_coord);
+
+            if (solve(board, p_region, next_cell)) return true;
+            undo_cell(board, p_region, next_cell);
+        }
+    }
+
+    // undo every adjacent cell that we filled at the start
+    for (int i = 0; i < adj_coords_num; i++) {
+        Coord adj_coord = adjs_with_same_val.at(i);
+        Cell &adj_cell = board.cell_at(adj_coord);
+        undo_cell(board, p_region, adj_cell);
     }
 
     return false;
