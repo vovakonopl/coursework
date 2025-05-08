@@ -1,6 +1,6 @@
 #include "solver/utils.h"
 #include "solver/coord_queue.h"
-#include <iostream>
+#include "solver/solver.h"
 using namespace std;
 
 bool is_coord_valid(Board &board, Coord coord) {
@@ -122,16 +122,13 @@ void reset_region(Board &board, Region *p_region) {
     }
 }
 
-bool fill_remaining_cells(Board &board) {
-    cout << "fill_remaining_cells!!!\n";
-    return true; // Testing for now
-
-    Coord first_unfilled_coord = find_first_unfilled(board);
-    if (first_unfilled_coord.row == -1) return true;
-
+// helper function
+// it use BFS and counts how many cells are adjacent to each other forming empty region
+int count_adjacent_empty_cells(Board &board, Coord coord) {
     Region region = board.create_region(-1);;
     CoordQueue queue;
-    queue.enqueue(first_unfilled_coord);
+    queue.enqueue(coord);
+ 
     while (queue.get_size() > 0) {
         Coord cell_coord = queue.dequeue();
         Cell &cell = board.cell_at(cell_coord);
@@ -150,24 +147,36 @@ bool fill_remaining_cells(Board &board) {
         }
     }
 
-    // set region's size as value for each member cell
-    for (int i = 0; i < region.get_size(); i++) {
-        Coord coord = region.coord_at(i);
-        Cell &cell = board.cell_at(coord);
-        cell.set_value(region.get_size());
-    }
-    
-    // if it is a single cell, then validate it
-    if (region.get_size() == 1 && !is_valid_single_cell(board, region.coord_at(0))) {
-        // Undo all changes and come back to solve()
-        reset_region(board, &region);
-        return false;
+    int count = region.get_size();
+
+    // Clear region. Clearing from the end will be faster
+    for (int i = count - 1; i >= 0; i--) {
+        Coord cell_coord = region.coord_at(i);
+        Cell &cell = board.cell_at(cell_coord);
+        undo_cell(board, &region, cell);
     }
 
-    if (fill_remaining_cells(board)) return true;
+    return count;
+}
 
-    // if failed to fill remaining cells, then undo changes
-    reset_region(board, &region);
+bool fill_remaining_cells(Board &board) {
+    return true;
+
+    Coord first_unfilled_coord = find_first_unfilled(board);
+    if (first_unfilled_coord.row == -1) return true;
+
+    Cell &cell = board.cell_at(first_unfilled_coord);
+    int adj_empty_cell_count = count_adjacent_empty_cells(board, first_unfilled_coord);
+    for (int size = adj_empty_cell_count; size > 0; size--) {
+        Region region = board.create_region(size);
+        cell.set_value(size);
+        cell.region_id = region.get_id();
+        region.push(first_unfilled_coord);
+
+        if (solve(board, &region, cell)) return true;
+        undo_cell(board, &region, cell);
+    }
+
     return false;
 }
 
@@ -267,4 +276,29 @@ bool can_be_added_to_region(Board &board, Coord coord, Region *p_region) {
     }
 
     return true;
+}
+
+int find_idx(std::vector<int> vect, int value) {
+    for (long unsigned int i = 0; i < vect.size(); i++) {
+        if (vect.at(i) == value) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+void fill_empty_board(Board &board) {
+    for (int row = 0; row < board.get_rows(); row++) {
+        for (int col = 0; col < board.get_cols(); col++) {
+            if (board.cell_at(row, col).get_value() != 1) {
+                board.result.push_back(Coord(row, col));
+            }
+        }
+    }
+
+    int filled_cell_num = board.result.size();
+    for (int i = 0; i < filled_cell_num; i++) {
+        board.cell_at(board.result.at(i)).set_value(filled_cell_num);
+    }
 }

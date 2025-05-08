@@ -35,4 +35,9 @@ void undo_cell(Board &board, Region *p_region, Cell &cell);
 void get_adjs_with_same_val(Board &board, Cell &cell, std::vector<Coord> &vec);
 bool can_be_added_to_region(Board &board, Coord coord, Region *p_region);
 
+int find_idx(std::vector<int> vect, int value);
+
+// fills empty board or board with valid single "1"  cells if board sizes >= 2x2 
+void fill_empty_board(Board &board);
+
 #endif

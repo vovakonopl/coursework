@@ -1,4 +1,5 @@
 #include "board/board.h"
+#include "solver/utils.h"
 #include <iostream>
 #include <stdexcept>
 
@@ -87,3 +88,18 @@ void Board::create_fixed_cells_list() {
         }
     }
 }
+
+void Board::fill_values_on_board() {
+    values_on_board.clear();
+   
+    for (int row = 0; row < rows; row++) {
+        for (int col = 0; col < cols; col++) {
+            Cell &cell = cell_at(row, col);
+            if (cell.get_value() == 0) continue;
+            if (find_idx(values_on_board, cell.get_value()) == -1) {
+                values_on_board.push_back(cell.get_value());   
+            }
+        }
+    }
+}
+

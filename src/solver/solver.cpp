@@ -7,7 +7,8 @@ bool solve(Board &board, Region *p_region, Cell &cell);
 bool solve(Board &board) {
     int idx = get_next_unfilled_fixed_cell_idx(board);
     if (idx == -1) {
-        return fill_remaining_cells(board);
+        fill_empty_board(board);
+        return true; 
     }
 
     Coord fixed_cell_coord = board.fixed_cell_coords.at(idx);
@@ -21,7 +22,6 @@ bool solve(Board &board) {
 }
 
 bool solve(Board &board, Region *p_region, Cell &cell) {
-    // check whether cell contains adjacent cells of save value
     std::vector<Coord> adjs_with_same_val;
     get_adjs_with_same_val(board, cell, adjs_with_same_val);
     int adj_coords_num = static_cast<int>(adjs_with_same_val.size());
@@ -45,8 +45,8 @@ bool solve(Board &board, Region *p_region, Cell &cell) {
     if (p_region->get_size() == p_region->get_target_size()) {
         int idx = get_next_unfilled_fixed_cell_idx(board);
         if (idx == -1) {
-            return true; // TEST
-            return fill_remaining_cells(board);
+            board.result.push_back(cell.get_coord());
+            return true;
         }
      
         Coord next_cell_coord = board.fixed_cell_coords.at(idx);
@@ -59,7 +59,6 @@ bool solve(Board &board, Region *p_region, Cell &cell) {
         if (!solve(board, &region, next_cell)) {
             // undo for next_cell
             next_cell.region_id = -1;
-            // region.pop(); // doesn't make any sense
 
             // undo every adjacent cell that we filled at the start
             for (int i = 0; i < adj_coords_num; i++) {
@@ -71,6 +70,7 @@ bool solve(Board &board, Region *p_region, Cell &cell) {
             return false;
         } 
         
+        board.result.push_back(cell.get_coord());
         return true;
     }
 
@@ -89,7 +89,11 @@ bool solve(Board &board, Region *p_region, Cell &cell) {
         next_cell.set_value(p_region->get_target_size());
         p_region->push(next_cell_coord);
 
-        if (solve(board, p_region, next_cell)) return true;
+        if (solve(board, p_region, next_cell)) {
+            board.result.push_back(cell.get_coord());
+            return true;
+        }
+
         undo_cell(board, p_region, next_cell);
     }
 
@@ -116,7 +120,11 @@ bool solve(Board &board, Region *p_region, Cell &cell) {
             next_cell.set_value(p_region->get_target_size());
             p_region->push(next_cell_coord);
 
-            if (solve(board, p_region, next_cell)) return true;
+            if (solve(board, p_region, next_cell)) {
+                board.result.push_back(cell.get_coord());
+                return true;
+            }
+
             undo_cell(board, p_region, next_cell);
         }
     }
