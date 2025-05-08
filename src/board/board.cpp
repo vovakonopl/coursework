@@ -1,6 +1,5 @@
 #include "board/board.h"
 #include "solver/utils.h"
-#include <iostream>
 #include <stdexcept>
 
 Board::Board(int rows, int cols) {
@@ -42,7 +41,6 @@ int Board::get_cols() {
 
 void Board::create_cell(int row, int col, int value, bool is_fixed) {
     if (row < 0 || row >= rows || col < 0 || col >= cols) {
-        std::cerr << "create_cell(4): index out of range!";
         throw std::out_of_range("Index out of range!");
     }
     
@@ -52,7 +50,6 @@ void Board::create_cell(int row, int col, int value, bool is_fixed) {
 
 Cell &Board::cell_at(int row, int col) {
     if (row < 0 || row >= rows || col < 0 || col >= cols) {
-        std::cerr << "cell_at(int, int): index out of range!";
         throw std::out_of_range("Index out of range!");
     }
 

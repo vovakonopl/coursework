@@ -72,27 +72,10 @@ bool solve(Board &board, Region *p_region, Cell &cell) {
         return true;
     }
 
-    // for each direction
-    for (int i = 0; i < 4; i++) {
-        Direction dir = static_cast<Direction>(i);
-        Coord next_cell_coord = get_free_adj_cell(board, cell, dir);
-        if (next_cell_coord.row == -1) continue;
 
-        // check whether this cell can be added to region
-        bool is_valid_adjacency = can_be_added_to_region(board, next_cell_coord, p_region);
-        if (!is_valid_adjacency) continue;
-
-        Cell &next_cell = board.cell_at(next_cell_coord);
-        next_cell.region_id = p_region->get_id();
-        next_cell.set_value(p_region->get_target_size());
-        p_region->push(next_cell_coord);
-
-        if (solve(board, p_region, next_cell)) {
-            board.result.push_back(cell.get_coord());
-            return true;
-        }
-
-        undo_cell(board, p_region, next_cell);
+    if (solve_for_each_adjacent(board, p_region, cell)) {
+        board.result.push_back(cell.get_coord());
+        return true;
     }
 
     // try for every cell in current region
@@ -103,27 +86,9 @@ bool solve(Board &board, Region *p_region, Cell &cell) {
         Cell &cell_in_reg = board.cell_at(coord);
         if (!has_any_free_adj_cell(board, cell_in_reg)) continue;
  
-        // for each direction
-        for (int i = 0; i < 4; i++) {
-            Direction dir = static_cast<Direction>(i);
-            Coord next_cell_coord = get_free_adj_cell(board, cell_in_reg, dir);
-            if (next_cell_coord.row == -1) continue;
-
-            // check whether this cell can be added to region
-            bool is_valid_adjacency = can_be_added_to_region(board, next_cell_coord, p_region);
-            if (!is_valid_adjacency) continue;
-
-            Cell &next_cell = board.cell_at(next_cell_coord);
-            next_cell.region_id = p_region->get_id();
-            next_cell.set_value(p_region->get_target_size());
-            p_region->push(next_cell_coord);
-
-            if (solve(board, p_region, next_cell)) {
-                board.result.push_back(cell.get_coord());
-                return true;
-            }
-
-            undo_cell(board, p_region, next_cell);
+        if (solve_for_each_adjacent(board, p_region, cell_in_reg)) {
+            board.result.push_back(cell.get_coord());
+            return true;
         }
     }
 

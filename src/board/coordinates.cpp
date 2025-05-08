@@ -1,5 +1,4 @@
 #include "board/coordinate.h"
-#include <iostream>
 
 Coord::Coord() {
     this->row = this->col = -1;

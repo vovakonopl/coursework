@@ -27,4 +27,7 @@ int find_idx(std::vector<int> vect, int value);
 // fills empty board or board with valid single "1"  cells if board sizes >= 2x2 
 void fill_empty_board(Board &board);
 
+// calls solve() function for every adjacent cell
+bool solve_for_each_adjacent(Board &board, Region *p_region, Cell &cell);
+
 #endif
