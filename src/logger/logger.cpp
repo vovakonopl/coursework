@@ -5,6 +5,11 @@
 #include <iostream>
 using namespace std;
 
+void clear_file() {
+    ofstream board_log_file(BOARD_LOG_FILE);
+    ofstream log_file(LOG_FILE);
+}
+
 void log_board(Board &board) {
     ofstream log_file(BOARD_LOG_FILE, ios::app);
     if (!log_file) {
@@ -29,25 +34,6 @@ void log_board(Board &board) {
     log_file << endl;
 }
 
-void clear_file() {
-    ofstream board_log_file(BOARD_LOG_FILE);
-    ofstream log_file(LOG_FILE);
-}
-
-void log_msg(string str) {
-    ofstream log_file(LOG_FILE, ios::app);
-    if (!log_file) {
-        cout << "Can't open file for writing\n";
-        return;
-    }
-
-    log_file << str << endl;
-    for (int i = 0; i < 20; i++) {
-        log_file << "~";
-    }
-    log_file << endl;
-}
-
 void log_board_regions(Board &board) {
     ofstream log_file(BOARD_LOG_FILE, ios::app);
     if (!log_file) {
@@ -67,6 +53,20 @@ void log_board_regions(Board &board) {
 
     int line_width = board.get_rows() * 3 + 1;
     for (int i = 0; i < line_width; i++) {
+        log_file << "~";
+    }
+    log_file << endl;
+}
+
+void log_msg(string str) {
+    ofstream log_file(LOG_FILE, ios::app);
+    if (!log_file) {
+        cout << "Can't open file for writing\n";
+        return;
+    }
+
+    log_file << str << endl;
+    for (int i = 0; i < 20; i++) {
         log_file << "~";
     }
     log_file << endl;

@@ -2,8 +2,6 @@
 #include "solver/utils.h"
 #include <vector>
 
-bool solve(Board &board, Region *p_region, Cell &cell);
-
 bool solve(Board &board) {
     int idx = get_next_unfilled_fixed_cell_idx(board);
     if (idx == -1) {

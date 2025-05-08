@@ -7,8 +7,8 @@
 #define BOARD_LOG_FILE "log_board.txt"
 #define LOG_FILE "log.txt"
 
-void log_board(Board &board);
 void clear_file();
+void log_board(Board &board);
 void log_board_regions(Board &board);
 void log_msg(std::string str);
 void log_to_board_msg(std::string str);
