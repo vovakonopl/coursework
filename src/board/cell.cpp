@@ -6,20 +6,6 @@ Cell::Cell() {
     this->region_id = -1;
 } 
 
-// TODO: remove these constructors
-Cell::Cell(int value) {
-    this->value = value;
-    this->is_fixed = false;
-    this->region_id = -1;
-}
-
-Cell::Cell(int value, bool is_fixed) {
-    this->value = value;
-    this->is_fixed = is_fixed;
-    this->region_id = -1;
-}
-// -------------------------------
-
 Cell::Cell(int row, int col, int value, bool is_fixed) {
     this->coord.row = row;
     this->coord.col = col;
@@ -46,8 +32,10 @@ Coord Cell::get_coord() {
 }
 
 std::ostream &operator <<(std::ostream &stream, Cell &cell) {
-    stream << "Cell: " << cell.get_coord() << "; val = " << cell.get_value()
+    stream << "Cell: " << cell.get_coord()
+        << "; val = " << cell.get_value()
         << "; fixed = " << cell.get_is_fixed()
         << "; reg id = " << cell.region_id << std::endl;
+ 
     return stream;
 }

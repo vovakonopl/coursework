@@ -6,6 +6,8 @@
 #include "cell.h"
 #include <vector>
 
+#define BOARD_MAX_SIZE 20
+
 class Board {
     int rows;
     int cols;

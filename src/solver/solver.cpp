@@ -16,7 +16,13 @@ bool solve(Board &board) {
     fixed_cell.region_id = region.get_id();
     region.push(fixed_cell_coord);
 
-    return solve(board, &region, fixed_cell);
+    bool result = solve(board, &region, fixed_cell);
+    if (result) {
+        // Results arrive in the end-to-start order. We need to reverse them
+        reverse_vector(board.result);
+    }
+
+    return result;
 }
 
 bool solve(Board &board, Region *p_region, Cell &cell) {
@@ -44,6 +50,7 @@ bool solve(Board &board, Region *p_region, Cell &cell) {
         int idx = get_next_unfilled_fixed_cell_idx(board);
         if (idx == -1) {
             board.result.push_back(cell.get_coord());
+            concat_vectors(board.result, adjs_with_same_val);
             return true;
         }
      
@@ -69,12 +76,14 @@ bool solve(Board &board, Region *p_region, Cell &cell) {
         } 
         
         board.result.push_back(cell.get_coord());
+        concat_vectors(board.result, adjs_with_same_val);
         return true;
     }
 
 
     if (solve_for_each_adjacent(board, p_region, cell)) {
         board.result.push_back(cell.get_coord());
+        concat_vectors(board.result, adjs_with_same_val);
         return true;
     }
 
@@ -88,6 +97,7 @@ bool solve(Board &board, Region *p_region, Cell &cell) {
  
         if (solve_for_each_adjacent(board, p_region, cell_in_reg)) {
             board.result.push_back(cell.get_coord());
+            concat_vectors(board.result, adjs_with_same_val);
             return true;
         }
     }

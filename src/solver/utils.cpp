@@ -32,7 +32,6 @@ bool can_be_added_to_region(Board &board, Coord coord, Region *p_region) {
     return true;
 }
 
-
 Coord get_free_adj_cell(Board &board, Cell &cell, Direction dir) {
     Coord cell_coord = cell.get_coord();
     int row = cell_coord.row;
@@ -184,3 +183,9 @@ bool solve_for_each_adjacent(Board &board, Region *p_region, Cell &cell) {
     return false;
 }
 
+void concat_vectors(std::vector<Coord> &vect1, std::vector<Coord> &vect2) {
+    for (long unsigned int i = 0; i < vect2.size(); i++) {
+        Coord coord = vect2.at(i);
+        vect1.push_back(coord);
+    }
+}

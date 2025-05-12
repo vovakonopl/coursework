@@ -1,19 +1,23 @@
 #include "terminal/terminal_io.h"
+#include "solver/utils.h"
+#include "terminal/terminal_utils.h"
 #include "terminal/arrow_keys.h"
 #include "terminal/codes/borders.h"
 #include "terminal/codes/cursor.h"
 #include "terminal/codes/erase.h"
 #include "terminal/codes/graphics.h"
 #include "terminal/board_sizes.h"
+#include "board/board.h"
 #include <iostream>
-#include <limits>
 #include <string>
-#include <termios.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
+#include <thread>
+#include <chrono>
+#include <cstdlib>
 #include <cctype>
+#include <unistd.h>
 
 #define MAX_CELL_VAL 99
+#define DRAW_INTERVAL 300 // in ms
 
 using std::cout;
 using std::cin;
@@ -29,105 +33,6 @@ Terminal::Terminal() {
 }
 
 // =-=-=-=-=-=-=-= Private methods =-=-=-=-=-=-=-= 
-void Terminal::disable_canon_mode() {
-    termios settings;
-    tcgetattr(STDIN_FILENO, &settings);
-    settings.c_lflag &= ~ICANON;
-
-    tcsetattr(STDIN_FILENO, TCSANOW, &settings);
-}
-
-void Terminal::enable_canon_mode() {
-    termios settings;
-    tcgetattr(STDIN_FILENO, &settings);
-    settings.c_lflag |= ICANON;
-
-    tcsetattr(STDIN_FILENO, TCSANOW, &settings);
-}
-
-void Terminal::disable_echo() {
-    termios settings;
-    tcgetattr(STDIN_FILENO, &settings);
-    settings.c_lflag &= ~ECHO;
-
-    tcsetattr(STDIN_FILENO, TCSANOW, &settings);
-
-}
-void Terminal::enable_echo() {
-    termios settings;
-    tcgetattr(STDIN_FILENO, &settings);
-    settings.c_lflag |= ECHO;
-
-    tcsetattr(STDIN_FILENO, TCSANOW, &settings);
-}
-
-void Terminal::clear_input() {
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-}
-
-void Terminal::clear_terminal() {
-    cout << ERASE_SCREEN CURSOR_HOME;
-}
-
-ArrowKey Terminal::read_arrow_key() {
-    char ch = cin.get();
-    if (ch != ESC_CHAR) {
-        cin.putback(ch);
-        return ArrowKey::None;
-    } 
-
-    ch = cin.get();
-    if (ch != '[') {
-        cin.putback(ch);
-        cin.putback(ESC_CHAR);
-        return ArrowKey::None;
-    } 
-
-    ch = cin.get();
-    switch (ch) {
-        case 'A': 
-            return ArrowKey::Up;
-
-        case 'B': 
-            return ArrowKey::Down;
-        
-        case 'C': 
-            return ArrowKey::Right;
-
-        case 'D': 
-            return ArrowKey::Left;
-
-        default:
-            cin.putback(ch);
-            cin.putback('[');
-            cin.putback(ESC_CHAR);
-            return ArrowKey::None;
-    }
-}
-
-bool Terminal::ignore_esc_sequence() {
-    char ch = cin.get();
-    if (ch != ESC_CHAR) {
-        cin.putback(ch);
-        return false;
-    }
-
-    // Double check - most sequences have [ after ESC
-    ch = cin.get();
-    if (ch != '[') {
-        cin.putback(ch);
-        cin.putback(ESC_CHAR);
-        return false;
-    }
-
-    // All escape sequences ends with char between @ and ~ in ASCII table
-    do {
-        ch = cin.get();
-    } while (ch < '@' || ch > '~');
-    
-    return true;
-}
-
 void Terminal::cursor_to_cell_start(int row, int col) {
     if (row < 0) {
         row = 0;
@@ -158,11 +63,22 @@ void Terminal::draw_cell(string_view bg_color, int row, int col) {
         cell_value.replace(cell_center, value.length(), value);
     }
 
-    cout << bg_color;
+    cout << BOLD FONT_BLACK;
+    if (bg_color[0] == '\0') { // empty string, ""
+        int color_idx = find_idx(p_board->values_on_board, cell.get_value()) % BG_COLOR_COUNT;
+        if (color_idx == -1) {
+            cout << bg_color;
+        } else {
+            cout << BG_COLORS[color_idx];
+        }
+    } else {
+        cout << bg_color;
+    }
+
     for (int row = 0; row < cell_height; row++) {
         if (row == (cell_height - 1) / 2) {
             if (cell.get_is_fixed()) {
-                cout << BOLD;
+                cout << FONT_WHITE;
             }
 
             cout << cell_value;
@@ -184,24 +100,6 @@ void Terminal::focus_cell(int row, int col) {
     int center_y = (cell_height - 1) / 2;
     cursor_right(center_x);
     cursor_down(center_y);
-}
-
-// !* helper function *!
-bool fits_on_screen(BoardSize size, Board *p_board, const winsize &win_size) {
-    int cell_width; 
-    int cell_height;
-    set_sizes(size, cell_width, cell_height);
-    
-    // + 1 for boarders
-    int board_width = 1 + (cell_width + 1) * p_board->get_cols();  
-    int board_height = 1 + (cell_height + 1) * p_board->get_rows();  
-  
-    // cout << CURSOR_SAVE << cursor_to(40, 20) << "board: w = " << board_width << "; h = " << board_height;
-    // cout  << cursor_to(41, 20) << "window: cols = " << win_size.ws_col << "; rows = " << win_size.ws_row << CURSOR_RESTORE;
-
-    return 
-        board_width <= win_size.ws_col &&
-        board_height + 4 <= win_size.ws_row; // reserve rows under the board
 }
 
 bool Terminal::resize_cells() {
@@ -270,31 +168,7 @@ Board *Terminal::read_board() {
     return p_board;
 }
 
-// !* helper function *!
-// outputs a full border line (whole row)
-// takes characters in params to output them on specified places 
-void print_border_line(
-    int cols,
-    int cell_width,
-    string_view main_char, // fills main space (e.g. ═══)
-    string_view first_char, // char at the beginning of the line
-    string_view split_char, // char at the place where the borders may somehow cross
-    string_view last_char // char at the end of the line
-) {
-    cout << first_char;
-    for (int col = 0; col < cols; col++) {
-        for (int i = 0; i < cell_width; i++) {
-            cout << main_char;
-        }
-
-        if (col != cols - 1) {
-            cout << split_char; 
-        }
-    }
-    cout << last_char << endl;
-}
-
-void Terminal::render_board() {
+void Terminal::render_board(bool with_interval) {
     if (!p_board) return;
 
     const int rows = p_board->get_rows();
@@ -320,28 +194,36 @@ void Terminal::render_board() {
     print_border_line(cols, cell_width, HORIZ_BORDER, BL_CORNER, TH_BORDER, BR_CORNER);
     cout << RESET_ALL CURSOR_SAVE;
 
-    for (int row = 0; row < rows; row++) {
-        for (int col = 0; col < cols; col++) {
-            draw_cell("", row, col);
+    if (with_interval) {
+        for (long unsigned int i = 0; i < p_board->result.size(); i++) {
+            // draw cells with interval
+            Coord coord = p_board->result.at(i);
+            draw_cell("", coord.row, coord.col);
+
+            // we need to output cells immediately to see the interval effect
+            cout.flush(); 
+            std::this_thread::sleep_for(std::chrono::milliseconds(DRAW_INTERVAL));
+        }
+    } else {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                draw_cell("", row, col);
+            }
         }
     }
 
     cout << CURSOR_RESTORE;
 }
 
-// !* helper function *!
-void display_finish_button(int board_width, bool is_active = false) {
-    string finish_btn = "[ Finish ]";
-    // left margin to center the button 
-    int btn_left_margin = (board_width - finish_btn.length()) / 2; 
- 
-    cout << cursor_right(btn_left_margin); 
-    cout << (is_active ? BG_ORANGE BOLD : FONT_ORANGE);
-    cout << finish_btn << RESET_ALL << endl << endl;
-}
-
-void Terminal::fill_fixed_cells() {
+void Terminal::fill_fixed_cells(const char *msg) {
     render_board();
+
+    if (msg) {
+        // under the finish button and hint
+        cout << CURSOR_SAVE << cursor_to(board_height + 5, 0)
+            << msg << CURSOR_RESTORE;
+    }
+ 
     string hint = 
         string("Use the arrow keys to navigate between the cells and enter some fixed numbers ") +
         "(0 - " + std::to_string(MAX_CELL_VAL) + ").\n";
@@ -467,7 +349,7 @@ void Terminal::fill_fixed_cells() {
         if (ch == '\b' || ch == 127) {
             int value = cell.get_value() / 10;
             bool is_fixed = value; // 0 == false
-            cell = Cell(value, is_fixed);
+            p_board->create_cell(curr_row, curr_col, value, is_fixed);
 
             focus_cell(curr_row, curr_col);
             continue;
@@ -478,13 +360,13 @@ void Terminal::fill_fixed_cells() {
         string value_str = std::to_string(cell.get_value());
         // set max value if there are already 2 digits
         if (value_str.length() >= 2) {
-            cell = Cell(MAX_CELL_VAL, true);   
+            p_board->create_cell(curr_row, curr_col, MAX_CELL_VAL, true);
         } else {
             // ch - '0' returns this digit in int representation
             int digit = (ch - '0');
             int value = cell.get_value() * 10 + digit;
             bool is_fixed = value;
-            cell = Cell(value, is_fixed);
+            p_board->create_cell(curr_row, curr_col, value, is_fixed);
         }
 
         focus_cell(curr_row, curr_col);
@@ -494,4 +376,110 @@ void Terminal::fill_fixed_cells() {
     enable_canon_mode();
     enable_echo();
     cout << cursor_to(board_height + 1, 0) << RESET_ALL ERASE_CURSOR_TO_SCREEN_END CURSOR_VISIBLE;
+}
+
+int Terminal::get_size() {
+    cout << CURSOR_SAVE;
+
+    int input = -1;
+    while (input <= 0 || input > BOARD_MAX_SIZE) {
+        cin >> input;
+        if (cin.fail() || input <= 0 || input > BOARD_MAX_SIZE) {
+            cin.clear();
+            cout << CURSOR_RESTORE CURSOR_NEXT_LINE FONT_RED BOLD 
+                << "Invalid number! Number must be in range 1 - " << BOARD_MAX_SIZE
+                << RESET_ALL CURSOR_RESTORE ERASE_CURSOR_TO_LINE_END;
+        }
+
+        clear_input();
+    }
+
+    cout << ERASE_CURSOR_TO_SCREEN_END;
+    return input;
+}
+
+void Terminal::ask_board_sizes(int &rows, int &cols) {
+    clear_terminal();
+    cout << "Creating board (max size is "
+        << BOARD_MAX_SIZE << "x" << BOARD_MAX_SIZE << ")\n";
+
+    cout << "Enter number of rows: ";
+    rows = get_size();
+
+    cout << "Enter number of cols: ";
+    cols = get_size();
+}
+
+SolveMode Terminal::select_mode_menu() {
+    // draw menu
+    cout << ERASE_SCREEN;
+    draw_menu(0);
+
+    // listen each key press + disable showing typed chars
+    disable_canon_mode();
+    disable_echo();
+    cout << CURSOR_INVISIBLE;
+
+    SolveMode mode;
+    bool is_selected = false;
+    int focused_option = 0;
+
+    while (!is_selected) {
+        ArrowKey arrow = read_arrow_key();
+        switch (arrow) {
+            case ArrowKey::Up:
+                focused_option--;
+                if (focused_option < 0) {
+                    focused_option = 2;
+                }
+
+                break;
+
+            case ArrowKey::Down:
+                focused_option++;
+                if (focused_option > 2) {
+                    focused_option = 0;
+                }
+
+                break;
+
+            default:
+                // ignore keys other than up/down arrows and enter
+                if(ignore_esc_sequence()) continue;
+                char ch = cin.get();
+                if (ch != '\n') continue;
+                
+                // finish
+                is_selected = true;
+                switch (focused_option) {
+                    case 0:
+                        mode = SolveMode::Manual;
+                        break;
+
+                    case 1: 
+                        mode = SolveMode::Computer; 
+                        break;
+
+                    default: 
+                        // leave menu after exiting the program
+                        draw_menu(-1); // remove focused options
+                        cout << cursor_lines_down(3); // jump under the menu
+                        continue;
+                }
+        }
+
+        // focuse new option and blure previous
+        draw_menu(focused_option);
+    }
+
+    // restore terminal settings
+    enable_canon_mode();
+    enable_echo();
+    cout << RESET_ALL CURSOR_VISIBLE;
+
+    if (focused_option == 2) {
+        exit(0); // end program
+    }
+
+    return mode;
 }
