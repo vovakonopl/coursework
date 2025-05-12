@@ -3,7 +3,6 @@
 
 #include "board/board.h"
 #include "solver/solve_mode.h"
-#include "terminal/arrow_keys.h"
 #include <string_view>
 
 class Terminal {
@@ -12,22 +11,6 @@ class Terminal {
     int cell_height;
     int board_width;
     int board_height;
-
-    // Cannonical mode allows to read the input after the Enter button is pressed
-    void disable_canon_mode();
-    void enable_canon_mode();
-  
-    // Toggle showing typed characters
-    void disable_echo();
-    void enable_echo();
-   
-    void clear_input();
-    void clear_terminal(); // clears everything on the screen
-
-    // Next 2 methods read the input searching for specific key
-    // If they find unexpected char, they put all taken chars back in the input stream
-    ArrowKey read_arrow_key();
-    bool ignore_esc_sequence(); // returns true if sequence was found and cleared
 
     void cursor_to_cell_start(int row, int col);
     void draw_cell(std::string_view bg_color, int row, int col);

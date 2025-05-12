@@ -24,7 +24,7 @@ bool validate_single_cells(Board *p_board) {
             Cell &cell = p_board->cell_at(row, col);
             if (cell.get_value() != 1) continue;
 
-            p_board->result.push_back(Coord(row, col));
+            // p_board->result.push_back(Coord(row, col));
          
             Coord adj_coords[4];
             adj_coords[0] = Coord(row - 1, col); // top

@@ -69,6 +69,7 @@ Region Board::create_region(int target_size) {
 
 void Board::create_fixed_cells_list() {
     fixed_cell_coords.clear();
+    result.clear();
 
     for (int row = 0; row < rows; row++) {
         for (int col = 0; col < cols; col++) {
@@ -77,6 +78,7 @@ void Board::create_fixed_cells_list() {
                 // single cells are autocompleted from start
                 if (cell.get_value() == 1) {
                     cell.region_id = -2; // any id is suitable for single cells. -1 stays for unfilled cells
+                    result.push_back(Coord(row, col));
                     continue;
                 }
 
