@@ -183,4 +183,3 @@ bool solve_for_each_adjacent(Board &board, Region *p_region, Cell &cell) {
 
     return false;
 }
-

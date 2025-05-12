@@ -7,16 +7,19 @@
 #include "terminal/codes/erase.h"
 #include "terminal/codes/graphics.h"
 #include "terminal/board_sizes.h"
-#include <cstdlib>
 #include <iostream>
 #include <limits>
 #include <string>
+#include <thread>
+#include <chrono>
+#include <cstdlib>
+#include <cctype>
 #include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <cctype>
 
 #define MAX_CELL_VAL 99
+#define DRAW_INTERVAL 300 // in ms
 
 using std::cout;
 using std::cin;
@@ -308,7 +311,7 @@ void print_border_line(
     cout << last_char << endl;
 }
 
-void Terminal::render_board() {
+void Terminal::render_board(bool with_interval) {
     if (!p_board) return;
 
     const int rows = p_board->get_rows();
@@ -334,9 +337,21 @@ void Terminal::render_board() {
     print_border_line(cols, cell_width, HORIZ_BORDER, BL_CORNER, TH_BORDER, BR_CORNER);
     cout << RESET_ALL CURSOR_SAVE;
 
-    for (int row = 0; row < rows; row++) {
-        for (int col = 0; col < cols; col++) {
-            draw_cell("", row, col);
+    if (with_interval) {
+        for (long unsigned int i = 0; i < p_board->result.size(); i++) {
+            // draw cells with interval
+            Coord coord = p_board->result.at(i);
+            draw_cell("", coord.row, coord.col);
+
+            // we need to output cells immediately to see the interval effect
+            cout.flush(); 
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        }
+    } else {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                draw_cell("", row, col);
+            }
         }
     }
 

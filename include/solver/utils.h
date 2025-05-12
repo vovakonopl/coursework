@@ -30,4 +30,12 @@ void fill_empty_board(Board &board);
 // calls solve() function for every adjacent cell
 bool solve_for_each_adjacent(Board &board, Region *p_region, Cell &cell);
 
+template <class T> void reverse_vector(std::vector<T> &vect) {
+    for (long unsigned int i = 0; i < vect.size() / 2; i++) {
+        T temp = vect.at(i);
+        vect.at(i) = vect.at(vect.size() - i - 1);
+        vect.at(vect.size() - i - 1) = temp;
+    }
+}
+
 #endif

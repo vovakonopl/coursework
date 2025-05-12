@@ -16,7 +16,13 @@ bool solve(Board &board) {
     fixed_cell.region_id = region.get_id();
     region.push(fixed_cell_coord);
 
-    return solve(board, &region, fixed_cell);
+    bool result = solve(board, &region, fixed_cell);
+    if (result) {
+        // Results arrive in the end-to-start order. We need to reverse them
+        reverse_vector(board.result);
+    }
+
+    return result;
 }
 
 bool solve(Board &board, Region *p_region, Cell &cell) {

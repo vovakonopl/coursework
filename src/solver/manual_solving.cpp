@@ -3,7 +3,6 @@
 #include "board/cell.h"
 #include "solver/utils.h"
 #include "solver/coord_queue.h"
-#include <iostream>
 
 Board *copy_board(Board &board) {
     Board *p_board = new Board(board.get_rows(), board.get_cols());
