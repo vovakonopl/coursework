@@ -47,7 +47,7 @@ public:
  
     Board *read_board();
     void render_board(bool with_interval = false);
-    void fill_fixed_cells();
+    void fill_fixed_cells(const char *msg = nullptr); // msg will be outputed under the board
     void ask_board_sizes(int &rows, int &cols);
     SolveMode select_mode_menu();
 };

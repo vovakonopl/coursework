@@ -1,4 +1,5 @@
 #include "solver/manual_solving.h"
+#include "terminal/codes/graphics.h"
 #include "terminal/terminal_io.h"
 #include "solver/solver.h"
 #include "solver/solve_mode.h"
@@ -29,16 +30,19 @@ int main(void) {
         return 0;
     } 
  
-    while (true) {
-        tm.fill_fixed_cells();
+    const char *wrong_msg = FONT_RED BOLD "Wrong solution. Try again!" RESET_ALL;
+    bool is_solved = true;
+    do {
+        tm.fill_fixed_cells(is_solved ? nullptr : wrong_msg);
         board.create_fixed_cells_list();
+        is_solved = is_correctly_solved(board);
         
-        if (is_correctly_solved(board)) {
+        if (is_solved) {
             board.fill_values_on_board();
             tm.render_board(true);
             break;
         } 
-    }
+    }  while (!is_solved);
 
     return 0;
 }

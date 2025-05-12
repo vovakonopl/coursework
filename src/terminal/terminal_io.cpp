@@ -369,8 +369,15 @@ void display_finish_button(int board_width, bool is_active = false) {
     cout << finish_btn << RESET_ALL << endl << endl;
 }
 
-void Terminal::fill_fixed_cells() {
+void Terminal::fill_fixed_cells(const char *msg) {
     render_board();
+
+    if (msg) {
+        // under the finish button and hint
+        cout << CURSOR_SAVE << cursor_to(board_height + 5, 0)
+            << msg << CURSOR_RESTORE;
+    }
+ 
     string hint = 
         string("Use the arrow keys to navigate between the cells and enter some fixed numbers ") +
         "(0 - " + std::to_string(MAX_CELL_VAL) + ").\n";
@@ -533,7 +540,7 @@ int Terminal::get_size() {
         cin >> input;
         if (cin.fail() || input <= 0 || input > BOARD_MAX_SIZE) {
             cin.clear();
-            cout << CURSOR_RESTORE CURSOR_NEXT_LINE FONT_RED 
+            cout << CURSOR_RESTORE CURSOR_NEXT_LINE FONT_RED BOLD 
                 << "Invalid number! Number must be in range 1 - " << BOARD_MAX_SIZE
                 << RESET_ALL CURSOR_RESTORE ERASE_CURSOR_TO_LINE_END;
         }
