@@ -13,7 +13,7 @@
 #define HORIZ_BORDER "═"
 #define VERT_BORDER "║"
 
-// junctions
+// functions
 #define TH_BORDER "╩"
 #define BH_BORDER "╦"
 #define RV_BORDER "╠"

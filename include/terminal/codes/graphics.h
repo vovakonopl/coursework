@@ -42,5 +42,11 @@
 #define FONT_LIGHT_GRAY ESC "[38;5;247m"
 #define BG_LIGHT_GRAY ESC "[48;5;247m"
 
+#define FONT_WHITE ESC "[38;5;255m"
+#define BG_WHITE ESC "[48;5;255m"
+
+#define BG_COLOR_COUNT 9
+extern const char *const BG_COLORS[BG_COLOR_COUNT];
+
 #endif
 

@@ -15,11 +15,6 @@ public:
     Cell();
     Cell(int row, int col, int value, bool is_fixed = true);
 
-    // TODO: remove in future
-    Cell(int value);
-    Cell(int value, bool is_fixed);
-    // ----------------------
-
     // getters/setters
     int get_value();
     void set_value(int value);

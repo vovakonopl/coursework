@@ -2,6 +2,7 @@
 #define TERMINAL_IO_H
 
 #include "board/board.h"
+#include "solver/solve_mode.h"
 #include "terminal/arrow_keys.h"
 #include <string_view>
 
@@ -36,6 +37,8 @@ class Terminal {
     // Returns true if cell size has been changed
     bool resize_cells();
 
+    int get_size(); // returns valid board size (rows/cols)
+
 public:
     Terminal();
 
@@ -45,6 +48,8 @@ public:
     Board *read_board();
     void render_board();
     void fill_fixed_cells();
+    void ask_board_sizes(int &rows, int &cols);
+    SolveMode select_mode_menu();
 };
 
 #endif
